@@ -3,7 +3,7 @@ defmodule ActiveMonitoring.Runtime.Broker do
   use Timex
   import Ecto.Query
   require Logger
-  alias ActiveMonitoring.{Repo, Campaign, Channel, AidaBot, Subject}
+  alias ActiveMonitoring.{Repo, Campaign, Channel, AidaBot, Subject, Call}
 
   @poll_interval :timer.minutes(15)
   @server_ref {:global, __MODULE__}
@@ -42,12 +42,18 @@ defmodule ActiveMonitoring.Runtime.Broker do
     end
   end
 
-  def handle_info(:poll, state) do
-    handle_info(:poll, state, Timex.now)
+  def handle_info(:notify, state, now) do
+    call = Repo.one(Call) |> Repo.preload(:campaign) |> Repo.preload(:subject)
+    ActiveMonitoring.RespondentEmail.positive_symptoms(call.campaign, call.subject) |> ActiveMonitoring.Mailer.deliver!
+    call |> Call.changeset(%{forwarded: true}) |> Repo.update!
   end
 
-  def handle_info(_, state) do
+  def handle_info(_, state, _) do
     {:noreply, state}
+  end
+
+  def handle_info(message, state) do
+    handle_info(message, state, Timex.now)
   end
 
   defp active_campaigns_to_remind(now) do
