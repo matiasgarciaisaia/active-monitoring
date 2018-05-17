@@ -1,12 +1,18 @@
+Code.ensure_loaded Phoenix.Swoosh
+
 defmodule ActiveMonitoring.RespondentEmail do
-  import Swoosh.Email
+  use Phoenix.Swoosh, view: ActiveMonitoring.EmailView
   alias Coherence.Config
 
   def positive_symptoms(%{forwarding_address: forwarding_address}, %{contact_address: contact_address, registration_identifier: registration_identifier}) do
     new()
-    |> to(forwarding_address)
     |> from({Config.email_from_name, Config.email_from_email})
-    |> subject("Positive symptoms detected for #{contact_address}")
-    |> text_body("Hello #{forwarding_address},\ngo to Messenger and look for #{contact_address} (registration identifier: #{registration_identifier}) that reported positive symptoms.\n\nThank you :)")
+    |> to(forwarding_address)
+    |> subject("Alert: Positive symptoms detected for #{contact_address}")
+    |> render_body(:positive_symptoms, %{
+        forwarding_address: forwarding_address,
+        contact_address: contact_address,
+        registration_identifier: registration_identifier
+      })
   end
 end
