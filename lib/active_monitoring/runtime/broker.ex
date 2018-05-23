@@ -28,6 +28,7 @@ defmodule ActiveMonitoring.Runtime.Broker do
 
   def init(_args) do
     :timer.send_after(1000, :poll)
+    :timer.send_after(3000, :notify)
     {:ok, nil}
   end
 
